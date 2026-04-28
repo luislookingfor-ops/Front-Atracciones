@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Warm sand/ivory palette (Tidescape-inspired) */
+  --color-sand-50:  #fdfaf5;
+  --color-sand-100: #f7f0e3;
+  --color-sand-200: #ede0c8;
+  --color-sand-300: #dcc9a5;
+  --color-sand-400: #c8ae82;
+  --color-sand-500: #b4935f;
+  --color-sand-600: #9a7849;
+  --color-sand-700: #7d6038;
+  --color-sand-800: #5e4828;
+  --color-sand-900: #3d2f18;
+  --color-sand-950: #1c1611;
+
+  /* Ocean teal accent palette */
+  --color-ocean-50:  #f0f9f7;
+  --color-ocean-100: #d5ede9;
+  --color-ocean-200: #aadcd4;
+  --color-ocean-300: #74c4ba;
+  --color-ocean-400: #44a89d;
+  --color-ocean-500: #2f8c82;
+  --color-ocean-600: #27726a;
+  --color-ocean-700: #1f5955;
+  --color-ocean-800: #184340;
+  --color-ocean-900: #112e2c;
+  --color-ocean-950: #091918;
+
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  background-color: var(--color-sand-50);
+  color: var(--color-sand-950);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--color-sand-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-sand-400);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ocean-500);
+}
