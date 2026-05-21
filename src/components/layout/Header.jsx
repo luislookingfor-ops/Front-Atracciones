@@ -2,12 +2,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, LogOut, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useCart } from '../../context/CartContext';
+import useCartStore from '../../store/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Header = () => {
   const { user, logout } = useAuth();
-  const { cartCount } = useCart();
+  const { count } = useCartStore();
+  const cartCount = count();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Star, ShoppingCart, ArrowRight, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import ReviewModal from './ReviewModal';
 import { IMAGE_BASE_URL } from '../../services/api';
@@ -18,7 +17,6 @@ const UNSPLASH_IMAGES = [
 ];
 
 const AttractionCard = ({ attraction, index = 0 }) => {
-  const { addToCart } = useCart();
   const { user } = useAuth();
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   
@@ -51,15 +49,15 @@ const AttractionCard = ({ attraction, index = 0 }) => {
           </div>
           {/* Add to cart hover overlay */}
           <div className="absolute inset-0 bg-sand-950/0 group-hover:bg-sand-950/20 transition-all duration-300 flex items-end p-4 gap-2">
-            <button
-              onClick={() => addToCart(attraction)}
+            <Link
+              to={`/atraccion/${attraction.atraccionId || attraction.id}`}
               id={`btn-add-to-cart-${attraction.id}`}
               className="flex-1 py-3 bg-sand-50 text-sand-950 text-[10px] font-medium tracking-[0.15em] uppercase opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2"
-              title="Añadir al carrito"
+              title="Reservar"
             >
               <ShoppingCart className="w-3.5 h-3.5" />
-              Carrito
-            </button>
+              Reservar
+            </Link>
             {user && (
               <button
                 onClick={() => setIsReviewModalOpen(true)}

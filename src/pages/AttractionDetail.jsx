@@ -96,6 +96,7 @@ const AttractionDetail = () => {
       date: selectedSlot.slot_date,
       time: selectedSlot.start_time,
       modalidad,
+      ciudadNombre: attraction.ciudadNombre || '',
     });
     sessionStorage.setItem('checkout_slot', JSON.stringify(selectedSlot));
     navigate('/checkout');
