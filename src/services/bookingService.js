@@ -1,5 +1,5 @@
 import { bookingApi } from './api';
-import { addDays, format, startOfDay } from 'date-fns';
+import { addDays, format, startOfDay, isBefore } from 'date-fns';
 
 const bookingService = {
   /**

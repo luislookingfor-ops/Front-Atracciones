@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   MapPin, Star, Clock, Users, Shield, Globe, ArrowLeft,
@@ -43,6 +43,7 @@ const MOCK_INCLUSIONS = [
 const AttractionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { addItem } = useCartStore();
 
@@ -77,7 +78,7 @@ const AttractionDetail = () => {
         text: 'Debes iniciar sesión para realizar una reserva.',
         confirmButtonText: 'Ir al login',
         confirmButtonColor: '#1c1611',
-      }).then((r) => { if (r.isConfirmed) navigate('/login'); });
+      }).then((r) => { if (r.isConfirmed) navigate('/login', { state: { from: location } }); });
       return;
     }
     if (!selectedSlot) {

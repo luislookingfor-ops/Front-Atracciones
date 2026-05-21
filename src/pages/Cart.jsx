@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, MapPin, Calendar, Clock, Layers } from 'lucide-react';
 import useCartStore from '../store/cartStore';
@@ -11,6 +11,7 @@ const Cart = () => {
   const { items: cartItems, removeItem, updateQuantity, total, clearCart } = useCartStore();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
 
   const cartTotal = total();
@@ -24,7 +25,7 @@ const Cart = () => {
         confirmButtonText: 'Ir al login',
         confirmButtonColor: '#1c1611',
       }).then((r) => {
-        if (r.isConfirmed) navigate('/login');
+        if (r.isConfirmed) navigate('/login', { state: { from: location } });
       });
       return;
     }
