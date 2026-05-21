@@ -13,12 +13,23 @@ const useAuthStore = create(
         set({ loading: true });
         try {
           const response = await identifyApi.post('/auth/login', { email, password });
-          const { accessToken, user: apiUser } = response.data;
-          const rol = apiUser.roles && apiUser.roles.length > 0 ? apiUser.roles[0] : 'Client';
+          console.log('Login response raw data (store):', response?.data);
+          const data = response.data;
+          const accessToken = data?.accessToken || data?.AccessToken;
+          const apiUser = data?.user || data?.User;
+          
+          if (!accessToken || !apiUser) {
+            throw new Error('Missing accessToken or user in response data. Keys present: ' + Object.keys(data || {}));
+          }
+
+          const rol = (apiUser.roles || apiUser.Roles) && (apiUser.roles || apiUser.Roles).length > 0 
+            ? (apiUser.roles || apiUser.Roles)[0] 
+            : 'Client';
+            
           const userData = {
-            id: apiUser.userId,
-            nombre: `${apiUser.firstName} ${apiUser.lastName}`.trim(),
-            correo: apiUser.email,
+            id: apiUser.userId || apiUser.UserId,
+            nombre: `${apiUser.firstName || apiUser.FirstName || ''} ${apiUser.lastName || apiUser.LastName || ''}`.trim(),
+            correo: apiUser.email || apiUser.Email,
             rol,
           };
           localStorage.setItem('token', accessToken);
@@ -26,10 +37,11 @@ const useAuthStore = create(
           set({ user: userData, token: accessToken, loading: false });
           return { success: true };
         } catch (error) {
+          console.error('Error al iniciar sesión (store):', error);
           set({ loading: false });
           return {
             success: false,
-            message: error.response?.data?.message || 'Error al iniciar sesión',
+            message: error.response?.data?.message || error.message || 'Error al iniciar sesión',
           };
         }
       },

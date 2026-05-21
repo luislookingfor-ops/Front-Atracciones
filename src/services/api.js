@@ -19,9 +19,22 @@ function createApiClient(baseURL) {
     (error) => Promise.reject(error)
   );
 
-  // Response interceptor — limpia sesión en 401
+  // Response interceptor — limpia sesión en 401 y desempaqueta ApiResponse
   client.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      if (response.data) {
+        const hasSuccess = response.data.hasOwnProperty('success') || response.data.hasOwnProperty('Success');
+        const hasData = response.data.hasOwnProperty('data') || response.data.hasOwnProperty('Data');
+        if (hasSuccess && hasData) {
+          const unwrappedData = response.data.data !== undefined ? response.data.data : response.data.Data;
+          return {
+            ...response,
+            data: unwrappedData
+          };
+        }
+      }
+      return response;
+    },
     (error) => {
       if (error.response?.status === 401) {
         localStorage.removeItem('token');
