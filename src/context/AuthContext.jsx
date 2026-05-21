@@ -17,10 +17,24 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async ({ email, password }) => {
+    let response;
     try {
-      const response = await identifyApi.post('/auth/login', { email, password });
+      // Intentar primero como cliente regular
+      response = await identifyApi.post('/auth/login', { email, password });
+    } catch (error) {
+      // Si falla, intentamos como administrador/partner
+      try {
+        response = await identifyApi.post('/auth/login-admin', { email, password });
+      } catch (adminError) {
+        return { 
+          success: false, 
+          message: adminError.response?.data?.message || error.response?.data?.message || 'Error al iniciar sesión' 
+        };
+      }
+    }
+
+    try {
       const { accessToken, user: apiUser } = response.data;
-      
       const rol = apiUser.roles && apiUser.roles.length > 0 ? apiUser.roles[0] : 'Client';
       const userData = { 
         id: apiUser.userId, 
@@ -33,10 +47,10 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       return { success: true };
-    } catch (error) {
+    } catch (parseError) {
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Error al iniciar sesión' 
+        message: 'Error al procesar los datos de sesión' 
       };
     }
   };
