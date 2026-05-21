@@ -8,7 +8,7 @@ import {
 import Swal from 'sweetalert2';
 import attractionService from '../services/attractionService';
 import useCartStore from '../store/cartStore';
-import useAuthStore from '../store/authStore';
+import { useAuth } from '../context/AuthContext';
 import MediaGallery from '../components/features/MediaGallery';
 import InteractiveItinerary from '../components/features/InteractiveItinerary';
 import LocationMap from '../components/features/LocationMap';
@@ -43,7 +43,7 @@ const MOCK_INCLUSIONS = [
 const AttractionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { addItem } = useCartStore();
 
   const [attraction, setAttraction] = useState(null);

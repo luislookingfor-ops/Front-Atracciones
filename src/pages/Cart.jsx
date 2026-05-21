@@ -3,13 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, MapPin, Calendar, Clock, Layers } from 'lucide-react';
 import useCartStore from '../store/cartStore';
-import useAuthStore from '../store/authStore';
+import { useAuth } from '../context/AuthContext';
 import { IMAGE_BASE_URL } from '../services/api';
 import Swal from 'sweetalert2';
 
 const Cart = () => {
   const { items: cartItems, removeItem, updateQuantity, total, clearCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 

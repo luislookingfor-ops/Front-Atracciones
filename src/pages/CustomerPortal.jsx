@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CalendarCheck, MapPin, Clock, AlertCircle, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import Swal from 'sweetalert2';
-import useAuthStore from '../store/authStore';
+import { useAuth } from '../context/AuthContext';
 import bookingService from '../services/bookingService';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -23,7 +23,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const CustomerPortal = () => {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);

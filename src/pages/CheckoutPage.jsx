@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, User, CreditCard, Shield, CheckCircle2, Lock } from 'lucide-react';
 import Swal from 'sweetalert2';
 import useCartStore from '../store/cartStore';
-import useAuthStore from '../store/authStore';
+import { useAuth } from '../context/AuthContext';
 import bookingService from '../services/bookingService';
 
 const STEPS = [
@@ -17,7 +17,7 @@ const emptyPassenger = () => ({ firstName: '', lastName: '', docType: 'pasaporte
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { items, total, clearCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [passengers, setPassengers] = useState([emptyPassenger()]);
   const [payment, setPayment] = useState({ cardNumber: '', expiry: '', cvv: '', cardName: '' });
