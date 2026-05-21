@@ -131,19 +131,32 @@ const bookingService = {
       const cartItems = JSON.parse(localStorage.getItem('cart-storage') || '{"state":{"items":[]}}').state?.items || [];
       const firstItem = cartItems[0] || {};
 
+      // Validar que el slotId es un UUID real (36 chars con guiones).
+      // Si es un ID simulado generado por el fallback, no se puede procesar un booking real.
+      const rawSlotId = storedSlot.id || firstItem.scheduleId || bookingData.scheduleId || '';
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const isRealSlot = UUID_REGEX.test(rawSlotId);
+
+      if (!isRealSlot) {
+        throw new Error(
+          'No hay cupos reales disponibles para el horario seleccionado. ' +
+          'Por favor selecciona una fecha y horario desde la página de la atracción e intenta de nuevo.'
+        );
+      }
+
       const payload = {
-        slotId: storedSlot.id || firstItem.scheduleId || bookingData.scheduleId,
+        slotId: rawSlotId,
         attractionId: firstItem.attractionId || bookingData.attractionId,
         attractionName: bookingData.attraction || firstItem.name,
         productTitle: bookingData.modalidad || firstItem.modalidad || 'General',
-        languageId: 1, // Español
+        languageId: 1,
         notes: bookingData.notas || '',
         contactName: bookingData.passengers?.[0]
           ? `${bookingData.passengers[0].first_name} ${bookingData.passengers[0].last_name}`
           : 'Contacto',
         contactEmail: JSON.parse(localStorage.getItem('user') || '{}').correo || '',
         passengers: bookingData.passengers.map(p => ({
-          priceTierId: '00000000-0000-0000-0000-000000000000',
+          priceTierId: p.priceTierId || '00000000-0000-0000-0000-000000000000',
           priceTierLabel: p.ticket_category_name || 'Adulto',
           unitPrice: p.unit_price || 0,
           firstName: p.first_name,
@@ -165,7 +178,7 @@ const bookingService = {
       };
     } catch (error) {
       console.error('Error creating booking:', error);
-      throw new Error(error.response?.data?.message || 'Error al procesar la reserva.');
+      throw new Error(error.response?.data?.message || error.message || 'Error al procesar la reserva.');
     }
   },
 

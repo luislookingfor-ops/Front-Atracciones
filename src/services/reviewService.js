@@ -34,6 +34,8 @@ const reviewService = {
       return response.data;
     } catch (error) {
       console.error('Error creating review:', error);
+      // Relanzar el error completo (con error.response) para que el caller
+      // pueda extraer el mensaje exacto del API.
       throw error;
     }
   }

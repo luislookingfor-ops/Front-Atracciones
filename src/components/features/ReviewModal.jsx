@@ -30,7 +30,12 @@ const ReviewModal = ({ attraction, isOpen, onClose, onReviewAdded }) => {
       onReviewAdded();
       onClose();
     } catch (error) {
-      alert('Error al enviar la reseña. Inténtalo de nuevo.');
+      // Mostrar el mensaje exacto del API si está disponible
+      const apiMessage = error.response?.data?.message || error.response?.data?.errors?.[0] || error.message;
+      const userMessage = apiMessage?.includes('reserva') || apiMessage?.includes('booking') || apiMessage?.includes('PNR')
+        ? apiMessage
+        : 'Para dejar una reseña necesitas haber completado una reserva de esta atracción. Verifica que tu reserva esté confirmada en "Mis Reservas".';
+      alert(userMessage);
     } finally {
       setSubmitting(false);
     }
