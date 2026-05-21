@@ -19,28 +19,32 @@ const ProvinciaList = () => {
       const response = await catalogApi.get('/location');
       const list = response.data || [];
 
-      // Extract countries
+      // Solo mostrar como provincias los nodos que tienen sub-hijos (3 niveles).
+      // Los hijos hoja son ciudades directas y no deben aparecer aquí.
       const countryList = list
-        .filter(n => n.type === 'country')
+        .filter(n => n.type?.toLowerCase() === 'country')
         .map(n => ({
           paisId: n.id,
           nombre: n.name
         }));
       setCountries(countryList);
 
-      // Extract states/provinces from hierarchy children
+      // Solo incluir como provincias los nodos intermedios (hijos con sub-hijos)
       const provinces = [];
       list.forEach(c => {
-        if (c.type === 'country') {
-          (c.children || []).forEach(s => {
+        if (c.type?.toLowerCase() !== 'country') return;
+        (c.children || []).forEach(child => {
+          if ((child.children || []).length > 0) {
+            // Tiene sub-hijos → es una provincia real
             provinces.push({
-              provinciaId: s.id,
-              nombre: s.name,
+              provinciaId: child.id,
+              nombre: child.name,
               paisId: c.id,
               estado: true
             });
-          });
-        }
+          }
+          // Si es hoja → es una ciudad directa, no se muestra aquí
+        });
       });
       setItems(provinces);
     } catch (error) {

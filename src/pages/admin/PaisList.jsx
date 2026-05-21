@@ -18,7 +18,7 @@ const PaisList = () => {
       const response = await catalogApi.get('/location');
       const list = response.data || [];
       const countries = list
-        .filter(n => n.type === 'country')
+        .filter(n => n.type?.toLowerCase() === 'country')
         .map(n => ({
           paisId: n.id,
           nombre: n.name,

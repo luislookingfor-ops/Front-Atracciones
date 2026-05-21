@@ -54,6 +54,7 @@ const EditAttraction = () => {
   const [provinces, setProvinces] = useState([]);
   const [cities, setCities] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [ticketCategories, setTicketCategories] = useState([]);
 
   // Fetch initial configuration data (Locations & Categories)
   useEffect(() => {
@@ -65,7 +66,18 @@ const EditAttraction = () => {
         const formattedCats = catList.map(c => ({ id: c.id, nombre: c.name }));
         setCategories(formattedCats);
 
+        // Fetch Ticket Categories (para price tiers)
+        try {
+          const tcRes = await catalogApi.get('/ticketcategory');
+          const tcList = tcRes.data || [];
+          setTicketCategories(tcList);
+        } catch (tcErr) {
+          console.warn('No se pudieron cargar las categorías de ticket:', tcErr);
+        }
+
         // Fetch Locations Hierarchy
+        // La API puede devolver 2 niveles (país→ciudad) o 3 niveles (país→provincia→ciudad).
+        // Detectamos automáticamente: si un hijo tiene sub-hijos es una provincia; si no, es ciudad directa.
         const locRes = await catalogApi.get('/location');
         const nodes = locRes.data || [];
         const allCountries = [];
@@ -73,13 +85,25 @@ const EditAttraction = () => {
         const allCities = [];
 
         nodes.forEach(country => {
-          if (country.type === 'country') {
+          if (country.type?.toLowerCase() === 'country') {
             allCountries.push({ id: country.id, nombre: country.name });
-            (country.children || []).forEach(state => {
-              allProvinces.push({ id: state.id, nombre: state.name, countryId: country.id });
-              (state.children || []).forEach(city => {
-                allCities.push({ id: city.id, nombre: city.name, provinceId: state.id });
-              });
+            (country.children || []).forEach(child => {
+              const grandchildren = child.children || [];
+              if (grandchildren.length > 0) {
+                // El hijo tiene sub-hijos → tratar como provincia
+                allProvinces.push({ id: child.id, nombre: child.name, countryId: country.id });
+                grandchildren.forEach(city => {
+                  allCities.push({ id: city.id, nombre: city.name, provinceId: child.id });
+                });
+              } else {
+                // El hijo es hoja → ciudad directa bajo el país (usar país como provincia)
+                // Creamos una "provincia virtual" por país si no existe
+                const virtualProvId = `virtual-${country.id}`;
+                if (!allProvinces.find(p => p.id === virtualProvId)) {
+                  allProvinces.push({ id: virtualProvId, nombre: country.name, countryId: country.id });
+                }
+                allCities.push({ id: child.id, nombre: child.name, provinceId: virtualProvId });
+              }
             });
           }
         });
@@ -100,7 +124,7 @@ const EditAttraction = () => {
             const firstCountry = allCountries[0].id;
             const provs = allProvinces.filter(p => p.countryId === firstCountry);
             const firstProvince = provs.length > 0 ? provs[0].id : '';
-            const cts = allCities.filter(c => c.provinceId === firstProvince);
+            const cts = firstProvince ? allCities.filter(c => c.provinceId === firstProvince) : [];
             const firstCity = cts.length > 0 ? cts[0].id : '';
 
             setForm(prev => ({
@@ -214,19 +238,25 @@ const EditAttraction = () => {
     setSaving(true);
     try {
       // Build DTOs compliant with Catalog.API models
+      // Usar la primera categoría de ticket disponible (Adulto por defecto).
+      // Si no se cargaron, omitir priceTiers para evitar el error FK 23503.
+      const adultTicketCatId = ticketCategories.find(tc =>
+        tc.name?.toLowerCase() === 'adulto' || tc.nameEn?.toLowerCase() === 'adult'
+      )?.id || ticketCategories[0]?.id || null;
+
       const defaultProduct = {
         title: 'Entrada General',
         description: 'Acceso básico a la atracción',
         durationMinutes: 120,
         cancelPolicyHours: 24,
         maxGroupSize: parseInt(form.capacidadMaxima) || 20,
-        priceTiers: [
+        priceTiers: adultTicketCatId ? [
           {
-            ticketCategoryId: '00000000-0000-0000-0000-000000000000',
+            ticketCategoryId: adultTicketCatId,
             price: parseFloat(form.precioBase) || 0,
             currencyCode: 'USD'
           }
-        ]
+        ] : []
       };
 
       const payload = {

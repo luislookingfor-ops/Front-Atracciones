@@ -19,36 +19,34 @@ const CiudadList = () => {
       const response = await catalogApi.get('/location');
       const list = response.data || [];
 
-      // Extract provinces
+      // Soportamos jerarquía de 2 niveles (País→Ciudad) y 3 niveles (País→Provincia→Ciudad).
+      // Si un hijo del país tiene sub-hijos → es una provincia real.
+      // Si un hijo del país es hoja → es una ciudad directa; usamos una provincia virtual por país.
       const provinceList = [];
-      list.forEach(c => {
-        if (c.type === 'country') {
-          (c.children || []).forEach(s => {
-            provinceList.push({
-              provinciaId: s.id,
-              nombre: s.name
-            });
-          });
-        }
-      });
-      setProvinces(provinceList);
-
-      // Extract cities
       const cities = [];
-      list.forEach(c => {
-        if (c.type === 'country') {
-          (c.children || []).forEach(s => {
-            (s.children || []).forEach(city => {
-              cities.push({
-                ciudadId: city.id,
-                nombre: city.name,
-                provinciaId: s.id,
-                estado: true
-              });
+
+      list.forEach(country => {
+        if (country.type?.toLowerCase() !== 'country') return;
+        (country.children || []).forEach(child => {
+          const grandchildren = child.children || [];
+          if (grandchildren.length > 0) {
+            // Nodo intermedio → es una provincia real
+            provinceList.push({ provinciaId: child.id, nombre: child.name });
+            grandchildren.forEach(city => {
+              cities.push({ ciudadId: city.id, nombre: city.name, provinciaId: child.id, estado: true });
             });
-          });
-        }
+          } else {
+            // Nodo hoja → ciudad directa bajo el país
+            const virtualProvId = `virtual-${country.id}`;
+            if (!provinceList.find(p => p.provinciaId === virtualProvId)) {
+              provinceList.push({ provinciaId: virtualProvId, nombre: country.name });
+            }
+            cities.push({ ciudadId: child.id, nombre: child.name, provinciaId: virtualProvId, estado: true });
+          }
+        });
       });
+
+      setProvinces(provinceList);
       setItems(cities);
     } catch (error) {
       console.error('Error fetching cities and provinces:', error);
