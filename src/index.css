@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
 @import "tailwindcss";
 
 @theme {
@@ -32,6 +33,17 @@
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
+/* ── Glassmorphism tokens ───────────────────────────────── */
+:root {
+  --glass-bg: rgba(253, 250, 245, 0.72);
+  --glass-border: rgba(220, 201, 165, 0.35);
+  --glass-shadow: 0 8px 32px rgba(28, 22, 17, 0.12);
+  --glass-blur: blur(16px);
+
+  --glass-dark-bg: rgba(28, 22, 17, 0.65);
+  --glass-dark-border: rgba(255, 255, 255, 0.08);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -57,19 +69,121 @@ h1, h2, h3 {
 }
 
 /* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background-color: var(--color-sand-100); }
+::-webkit-scrollbar-thumb { background-color: var(--color-sand-400); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--color-ocean-500); }
+
+/* ── Micro-animations ───────────────────────────────────── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.4); opacity: 0.6; }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-::-webkit-scrollbar-track {
-  background-color: var(--color-sand-100);
+.animate-fade-slide-up  { animation: fadeSlideUp  0.5s ease both; }
+.animate-slide-in-right { animation: slideInRight 0.4s ease both; }
+.animate-scale-in       { animation: scaleIn      0.3s ease both; }
+
+/* ── Skeleton shimmer ───────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--color-sand-100) 25%, var(--color-sand-200) 50%, var(--color-sand-100) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
 }
 
-::-webkit-scrollbar-thumb {
-  background-color: var(--color-sand-400);
+/* ── Glassmorphism utility ──────────────────────────────── */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+.glass-dark {
+  background: var(--glass-dark-bg);
+  border: 1px solid var(--glass-dark-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+/* ── Availability Calendar ──────────────────────────────── */
+.avail-day {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.avail-day.available   { color: var(--color-sand-950); }
+.avail-day.available:hover { background: var(--color-ocean-100); color: var(--color-ocean-700); border-radius: 4px; }
+.avail-day.sold-out    { color: var(--color-sand-300); cursor: not-allowed; text-decoration: line-through; }
+.avail-day.selected    { background: var(--color-sand-950); color: #fff; border-radius: 4px; }
+.avail-day.today       { border: 1px solid var(--color-ocean-400); border-radius: 4px; }
+.avail-day.past        { color: var(--color-sand-200); cursor: not-allowed; }
+.avail-day .avail-dot {
+  position: absolute;
+  bottom: 3px;
+  width: 4px; height: 4px;
   border-radius: 9999px;
+  background: var(--color-ocean-400);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ocean-500);
+/* ── POS Terminal Badge ─────────────────────────────────── */
+.badge-confirmed  { background: #d1fae5; color: #065f46; }
+.badge-cancelled  { background: #fee2e2; color: #991b1b; }
+.badge-pending    { background: #fef3c7; color: #92400e; }
+
+/* ── Leaflet overrides ──────────────────────────────────── */
+.leaflet-container {
+  font-family: var(--font-sans);
+  border-radius: 0;
 }
+.leaflet-control-attribution { font-size: 10px !important; }
+.leaflet-popup-content-wrapper {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 2px !important;
+  box-shadow: var(--glass-shadow);
+}
+.leaflet-popup-tip { background: var(--color-sand-100); }
+
+/* ── Tab underline ──────────────────────────────────────── */
+.tab-active {
+  border-bottom: 2px solid var(--color-sand-950);
+  color: var(--color-sand-950);
+}
+.tab-inactive {
+  border-bottom: 2px solid transparent;
+  color: var(--color-sand-500);
+}
+.tab-inactive:hover { color: var(--color-sand-700); border-bottom-color: var(--color-sand-300); }
+
+/* ── Schedule monitor progress bar ─────────────────────── */
+.capacity-bar { height: 6px; border-radius: 9999px; background: var(--color-sand-200); overflow: hidden; }
+.capacity-bar-fill { height: 100%; border-radius: 9999px; transition: width 0.5s ease; }
+.capacity-bar-fill.low  { background: var(--color-ocean-400); }
+.capacity-bar-fill.med  { background: #f59e0b; }
+.capacity-bar-fill.high { background: #ef4444; }

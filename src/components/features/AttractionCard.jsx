@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Star, ShoppingCart, ArrowRight, MessageSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import ReviewModal from './ReviewModal';
 import { IMAGE_BASE_URL } from '../../services/api';
+
 
 const UNSPLASH_IMAGES = [
   'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80',
@@ -107,12 +109,13 @@ const AttractionCard = ({ attraction, index = 0 }) => {
                 ${attraction.precio || '45'}
               </div>
             </div>
-            <button
+            <Link
+              to={`/atraccion/${attraction.atraccionId || attraction.id}`}
               id={`btn-info-${attraction.id}`}
               className="inline-flex items-center gap-1.5 text-[10px] font-medium tracking-[0.12em] uppercase text-ocean-600 hover:text-ocean-700 transition-colors"
             >
-              Ver más <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+              Ver detalle <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </motion.article>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search, Tag } from 'lucide-react';
-import api from '../../services/api';
+import { catalogApi } from '../../services/api';
 
 const CategoryList = () => {
   const [categories, setCategories] = useState([]);
@@ -15,8 +15,9 @@ const CategoryList = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.get('/Categoria');
-      setCategories(response.data);
+      const response = await catalogApi.get('/category');
+      const list = response.data.items || response.data || [];
+      setCategories(list.map(c => ({ id: c.id, nombre: c.name, estado: c.isPublished ?? true })));
     } catch (error) {
       console.error('Error fetching categories:', error);
     } finally {
@@ -27,10 +28,11 @@ const CategoryList = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
+      const payload = { name: currentCategory.nombre };
       if (currentCategory.id) {
-        await api.put(`/Categoria/${currentCategory.id}`, currentCategory);
+        await catalogApi.put(`/category/${currentCategory.id}`, payload);
       } else {
-        await api.post('/Categoria', currentCategory);
+        await catalogApi.post('/category', payload);
       }
       setIsModalOpen(false);
       fetchCategories();
@@ -43,7 +45,7 @@ const CategoryList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta categoría?')) {
       try {
-        await api.delete(`/Categoria/${id}`);
+        await catalogApi.delete(`/category/${id}`);
         setCategories(categories.filter(c => c.id !== id));
       } catch (error) {
         alert('Error al eliminar la categoría. Verifique si tiene atracciones asociadas.');

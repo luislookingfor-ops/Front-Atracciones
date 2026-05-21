@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Trash2, Search, UserPlus, Shield } from 'lucide-react';
-import api from '../../services/api';
+import { identifyApi } from '../../services/api';
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
@@ -13,8 +13,16 @@ const UserList = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get('/UsuarioApp');
-      setUsers(response.data);
+      const response = await identifyApi.get('/user');
+      // El backend devuelve un PagedResult con .items o una lista directa
+      const list = response.data.items || response.data || [];
+      setUsers(list.map(u => ({
+        usuarioId: u.id,
+        nombreUsuario: u.name,
+        correo: u.email,
+        estado: u.isActive,
+        rol: u.role
+      })));
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -25,7 +33,7 @@ const UserList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
       try {
-        await api.delete(`/UsuarioApp/${id}`);
+        await identifyApi.delete(`/user/${id}`);
         setUsers(users.filter(u => u.usuarioId !== id));
       } catch (error) {
         alert('Error al eliminar el usuario.');

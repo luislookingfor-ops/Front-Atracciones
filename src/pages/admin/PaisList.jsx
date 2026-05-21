@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search, Globe } from 'lucide-react';
-import api from '../../services/api';
+import { catalogApi } from '../../services/api';
 
 const PaisList = () => {
   const [items, setItems] = useState([]);
@@ -15,8 +15,17 @@ const PaisList = () => {
 
   const fetchItems = async () => {
     try {
-      const response = await api.get('/Pais');
-      setItems(response.data);
+      const response = await catalogApi.get('/location');
+      const list = response.data || [];
+      const countries = list
+        .filter(n => n.type === 'country')
+        .map(n => ({
+          paisId: n.id,
+          nombre: n.name,
+          codigoIso: n.countryCode || '',
+          estado: true
+        }));
+      setItems(countries);
     } catch (error) {
       console.error('Error fetching countries:', error);
     } finally {
@@ -27,10 +36,17 @@ const PaisList = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        name: currentItem.nombre,
+        type: 'country',
+        countryCode: currentItem.codigoIso,
+        parentId: null
+      };
+
       if (currentItem.paisId) {
-        await api.put(`/Pais/${currentItem.paisId}`, currentItem);
+        await catalogApi.put(`/location/${currentItem.paisId}`, payload);
       } else {
-        await api.post('/Pais', currentItem);
+        await catalogApi.post('/location', payload);
       }
       setIsModalOpen(false);
       fetchItems();
@@ -43,7 +59,7 @@ const PaisList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Deseas eliminar este país?')) {
       try {
-        await api.delete(`/Pais/${id}`);
+        await catalogApi.delete(`/location/${id}`);
         setItems(items.filter(i => i.paisId !== id));
       } catch (error) {
         const msg = error.response?.data?.message || 'Error al eliminar el país.';
@@ -88,7 +104,7 @@ const PaisList = () => {
           <thead>
             <tr className="bg-sand-50 border-b border-sand-200">
               <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-sand-500 font-medium">Nombre</th>
-              <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-sand-500 font-medium">Estado</th>
+              <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-sand-500 font-medium">Código ISO</th>
               <th className="px-6 py-4 text-[10px] uppercase tracking-widest text-sand-500 font-medium text-right">Acciones</th>
             </tr>
           </thead>
@@ -98,11 +114,7 @@ const PaisList = () => {
                 <td className="px-6 py-4 font-medium text-sand-950 flex items-center gap-2">
                   <Globe className="w-3 h-3 text-ocean-600" /> {item.nombre}
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-[9px] uppercase tracking-tighter font-bold rounded ${item.estado ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {item.estado ? 'Activo' : 'Inactivo'}
-                  </span>
-                </td>
+                <td className="px-6 py-4 text-sm text-sand-600">{item.codigoIso}</td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-2">
                     <button onClick={() => { setCurrentItem(item); setIsModalOpen(true); }} className="p-2 text-ocean-600 hover:bg-ocean-50 rounded-full">
@@ -143,14 +155,6 @@ const PaisList = () => {
                   value={currentItem.codigoIso}
                   onChange={(e) => setCurrentItem({ ...currentItem, codigoIso: e.target.value.toUpperCase() })}
                 />
-              </div>
-              <div className="flex items-center gap-3">
-                <input 
-                  type="checkbox" id="pais-estado"
-                  checked={currentItem.estado}
-                  onChange={(e) => setCurrentItem({ ...currentItem, estado: e.target.checked })}
-                />
-                <label htmlFor="pais-estado" className="text-[10px] uppercase tracking-widest text-sand-500 font-medium cursor-pointer">Activo</label>
               </div>
               <div className="flex gap-4">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 border border-sand-200 text-xs uppercase tracking-widest text-sand-600 hover:bg-sand-50">Cancelar</button>

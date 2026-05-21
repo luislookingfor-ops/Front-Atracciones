@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Trash2, Search, Star, User, MapPin } from 'lucide-react';
-import api from '../../services/api';
+import { bookingApi } from '../../services/api';
 
 const ResenaList = () => {
   const [items, setItems] = useState([]);
@@ -13,8 +13,15 @@ const ResenaList = () => {
 
   const fetchItems = async () => {
     try {
-      const response = await api.get('/Resena');
-      setItems(response.data);
+      const response = await bookingApi.get('/review/management', { params: { pageNumber: 1, pageSize: 100 } });
+      const list = response.data.items || response.data || [];
+      setItems(list.map(r => ({
+        resenaId: r.id,
+        calificacion: r.overallRating,
+        comentario: r.comment || r.title || '',
+        usuarioNombre: r.clientName || 'Usuario',
+        atraccionNombre: '—'
+      })));
     } catch (error) {
       console.error('Error fetching reviews:', error);
     } finally {
@@ -25,7 +32,7 @@ const ResenaList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Deseas eliminar esta reseña?')) {
       try {
-        await api.delete(`/Resena/${id}`);
+        await bookingApi.delete(`/review/${id}`);
         setItems(items.filter(i => i.resenaId !== id));
       } catch (error) {
         const msg = error.response?.data?.message || 'Error al eliminar la reseña.';

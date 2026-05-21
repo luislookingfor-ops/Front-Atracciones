@@ -1,38 +1,69 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// ── Helper: crea un cliente Axios con interceptores de JWT y manejo de 401 ──
+function createApiClient(baseURL) {
+  const client = axios.create({
+    baseURL,
+    headers: { 'Content-Type': 'application/json' },
+  });
 
-// Request interceptor to add JWT token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  // Request interceptor — adjunta el token JWT si existe
+  client.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  // Response interceptor — limpia sesión en 401
+  client.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+      return Promise.reject(error);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
+  );
+
+  return client;
+}
+
+// ══════════════════════════════════════════════════════════════
+// 4 clientes independientes — uno por microservicio
+// ══════════════════════════════════════════════════════════════
+
+/** Microservicio de Identidad (auth, users, clients) */
+export const identifyApi = createApiClient(
+  import.meta.env.VITE_IDENTIFY_API_URL
 );
 
-// Response interceptor to handle errors globally
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      // window.location.href = '/login'; // Optional: Redirect on unauthorized
-    }
-    return Promise.reject(error);
-  }
+/** Microservicio de Catálogo (attractions, categories, locations, tags, media, etc.) */
+export const catalogApi = createApiClient(
+  import.meta.env.VITE_CATALOG_API_URL
 );
 
-export const IMAGE_BASE_URL = import.meta.env.VITE_API_BASE_URL.split('/api')[0];
+/** Microservicio de Reservas (bookings, reviews, availability) */
+export const bookingApi = createApiClient(
+  import.meta.env.VITE_BOOKING_API_URL
+);
 
+/** Microservicio de Facturación (billing, payments) */
+export const billingApi = createApiClient(
+  import.meta.env.VITE_BILLING_API_URL
+);
+
+// ── Backward-compatible default export (apunta a Catalog) ──
+// Esto evita romper imports existentes que hacen `import api from './api'`
+// mientras se migran gradualmente los archivos.
+const api = catalogApi;
 export default api;
+
+// ── Utilidad para construir URLs de imagen ──
+// Las imágenes se almacenan con rutas relativas en el catálogo
+export const IMAGE_BASE_URL = (import.meta.env.VITE_CATALOG_API_URL || '').split('/api')[0];

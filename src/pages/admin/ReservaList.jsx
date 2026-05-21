@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Users, DollarSign, Search, Filter, XCircle, CheckCircle } from 'lucide-react';
-import api from '../../services/api';
+import { bookingApi } from '../../services/api';
 
 const ReservaList = () => {
   const [reservas, setReservas] = useState([]);
@@ -13,8 +13,19 @@ const ReservaList = () => {
 
   const fetchReservas = async () => {
     try {
-      const response = await api.get('/Reserva');
-      setReservas(response.data);
+      const response = await bookingApi.get('/admin-booking/management', {
+        params: { pageNumber: 1, pageSize: 100 }
+      });
+      const list = response.data.items || [];
+      setReservas(list.map(r => ({
+        reservaId: r.id,
+        codigoLocalizador: r.pnrCode,
+        usuarioNombre: r.clientName || r.clientEmail || 'Cliente',
+        atraccionNombre: r.attractionName,
+        cantidadPersonas: r.totalPassengers || 1,
+        totalPagado: r.totalAmount,
+        estadoReserva: r.statusName === 'Confirmed' ? 'Confirmada' : r.statusName === 'Cancelled' ? 'Cancelada' : 'Pendiente'
+      })));
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {
@@ -25,7 +36,7 @@ const ReservaList = () => {
   const handleCancel = async (id) => {
     if (window.confirm('¿Deseas cancelar esta reserva?')) {
       try {
-        await api.put(`/Reserva/${id}/cancelar`);
+        await bookingApi.post(`/booking/${id}/cancel`);
         fetchReservas();
       } catch (error) {
         alert('Error al cancelar la reserva.');

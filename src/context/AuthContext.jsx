@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import { identifyApi } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -18,11 +18,18 @@ export const AuthProvider = ({ children }) => {
 
   const login = async ({ email, password }) => {
     try {
-      const response = await api.post('/Auth/login', { correo: email, password });
-      const { token, usuarioId, usuario, correo, rol } = response.data;
+      const response = await identifyApi.post('/auth/login', { email, password });
+      const { accessToken, user: apiUser } = response.data;
       
-      const userData = { id: usuarioId, nombre: usuario, correo, rol };
-      localStorage.setItem('token', token);
+      const rol = apiUser.roles && apiUser.roles.length > 0 ? apiUser.roles[0] : 'Client';
+      const userData = { 
+        id: apiUser.userId, 
+        nombre: `${apiUser.firstName} ${apiUser.lastName}`.trim(), 
+        correo: apiUser.email, 
+        rol 
+      };
+      
+      localStorage.setItem('token', accessToken);
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       return { success: true };
@@ -45,11 +52,12 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const dto = {
-        nombreUsuario: `${userData.nombre} ${userData.apellido}`,
-        correo: userData.email,
-        passwordHash: userData.password
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.nombre || '',
+        lastName: userData.apellido || '',
       };
-      await api.post('/Auth/register', dto);
+      await identifyApi.post('/auth/register', dto);
       return { success: true };
     } catch (error) {
       return { 

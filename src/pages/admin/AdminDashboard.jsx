@@ -1,24 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
-  Plus, 
-  Search, 
-  Edit2, 
-  Trash2, 
-  MapPin, 
-  Image as ImageIcon,
-  Users,
-  LayoutDashboard,
-  Tag,
-  CalendarCheck,
-  LogOut,
-  ChevronRight,
-  Settings,
-  Zap,
-  Globe,
-  Star
+  Plus, Search, Edit2, Trash2, MapPin, Image as ImageIcon,
+  Users, LayoutDashboard, Tag, CalendarCheck, LogOut,
+  ChevronRight, Settings, Zap, Globe, Star, ShoppingBag,
+  Calendar, TrendingUp, Activity, Clock
 } from 'lucide-react';
-import api, { IMAGE_BASE_URL } from '../../services/api';
+import { catalogApi, IMAGE_BASE_URL } from '../../services/api';
 import UserList from './UserList';
 import CategoryList from './CategoryList';
 import ReservaList from './ReservaList';
@@ -27,6 +15,14 @@ import PaisList from './PaisList';
 import ProvinciaList from './ProvinciaList';
 import ResenaList from './ResenaList';
 import CiudadList from './CiudadList';
+
+// KPI mock data (replace with real API calls when microservices are ready)
+const MOCK_KPIS = [
+  { label: 'Reservas hoy', value: '24', delta: '+12%', icon: CalendarCheck, color: 'text-ocean-600', bg: 'bg-ocean-50' },
+  { label: 'Ingresos del día', value: '$1,248', delta: '+8%', icon: TrendingUp, color: 'text-sand-700', bg: 'bg-sand-100' },
+  { label: 'Atracciones activas', value: '—', delta: null, icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { label: 'Cupos disponibles hoy', value: '136', delta: null, icon: Users, color: 'text-violet-600', bg: 'bg-violet-50' },
+];
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('atracciones');
@@ -44,8 +40,20 @@ const AdminDashboard = () => {
   const fetchAtracciones = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/Atraccion');
-      setAtracciones(response.data);
+      const response = await catalogApi.get('/attraction/management', { params: { pageNumber: 1, pageSize: 100 } });
+      const list = response.data.items || response.data || [];
+      const mapped = list.map(a => ({
+        atraccionId: a.id,
+        nombre: a.name,
+        precioBase: a.startingPrice || 0,
+        capacidadMaxima: a.maxGroupSize || 20,
+        ciudadNombre: a.locationName,
+        imagenUrl: a.mainImageUrl,
+        activo: a.isActive
+      }));
+      setAtracciones(mapped);
+      // Update KPI with real count
+      MOCK_KPIS[2].value = String(mapped.filter(a => a.activo !== false).length);
     } catch (error) {
       console.error('Error fetching attractions:', error);
     } finally {
@@ -56,7 +64,7 @@ const AdminDashboard = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar esta atracción?')) {
       try {
-        await api.delete(`/Atraccion/${id}`);
+        await catalogApi.delete(`/attraction/${id}`);
         setAtracciones(atracciones.filter(a => a.atraccionId !== id));
       } catch (error) {
         alert('Error al eliminar la atracción.');
@@ -79,6 +87,11 @@ const AdminDashboard = () => {
     { id: 'ciudades', label: 'Ciudades', icon: MapPin },
     { id: 'reservas', label: 'Reservas', icon: CalendarCheck },
     { id: 'resenas', label: 'Reseñas', icon: Star },
+  ];
+
+  const quickLinks = [
+    { label: 'POS Terminal', to: '/admin/pos', icon: ShoppingBag, desc: 'Venta rápida en taquilla' },
+    { label: 'Gestión de Reservas', to: '/admin/reservas', icon: CalendarCheck, desc: 'Buscar por PNR, cancelar' },
   ];
 
   return (
@@ -115,25 +128,55 @@ const AdminDashboard = () => {
           
           <div className="pt-8">
             <p className="text-[10px] uppercase tracking-[0.2em] text-sand-400 font-bold mb-4 px-2">Sistema</p>
-            <button className="w-full flex items-center gap-3 px-4 py-3 text-sm text-sand-600 hover:bg-sand-50 transition-colors">
-              <Settings className="w-4 h-4 text-sand-400" />
-              <span className="font-medium tracking-wide">Configuración</span>
-            </button>
-            <button 
-              onClick={() => { localStorage.removeItem('token'); navigate('/login'); }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <LogOut className="w-4 h-4 text-red-400" />
-              <span className="font-medium tracking-wide">Cerrar Sesión</span>
-            </button>
+              <Link to="/admin/pos" className="w-full flex items-center gap-3 px-4 py-3 text-sm text-sand-600 hover:bg-sand-50 transition-colors">
+                <ShoppingBag className="w-4 h-4 text-sand-400" />
+                <span className="font-medium tracking-wide">POS Terminal</span>
+              </Link>
+              <Link to="/admin/reservas" className="w-full flex items-center gap-3 px-4 py-3 text-sm text-sand-600 hover:bg-sand-50 transition-colors">
+                <CalendarCheck className="w-4 h-4 text-sand-400" />
+                <span className="font-medium tracking-wide">Gest. Reservas</span>
+              </Link>
+              <button className="w-full flex items-center gap-3 px-4 py-3 text-sm text-sand-600 hover:bg-sand-50 transition-colors">
+                <Settings className="w-4 h-4 text-sand-400" />
+                <span className="font-medium tracking-wide">Configuración</span>
+              </button>
+              <button 
+                onClick={() => { localStorage.removeItem('token'); navigate('/login'); }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogOut className="w-4 h-4 text-red-400" />
+                <span className="font-medium tracking-wide">Cerrar Sesión</span>
+              </button>
           </div>
         </nav>
       </aside>
+
 
       {/* Main Content */}
       <main className="flex-1 ml-64 p-12">
         {activeTab === 'atracciones' && (
           <div className="space-y-10 max-w-7xl mx-auto animate-in fade-in duration-700">
+            {/* KPI Dashboard */}
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+              {MOCK_KPIS.map((kpi, i) => {
+                const Icon = kpi.icon;
+                return (
+                  <div key={i} className="bg-white border border-sand-200 p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-8 h-8 ${kpi.bg} flex items-center justify-center`}>
+                        <Icon className={`w-4 h-4 ${kpi.color}`} />
+                      </div>
+                      {kpi.delta && (
+                        <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5">{kpi.delta}</span>
+                      )}
+                    </div>
+                    <div style={{ fontFamily: 'Cormorant Garamond, serif' }} className="text-3xl font-light text-sand-950">{kpi.value}</div>
+                    <div className="text-[10px] uppercase tracking-widest text-sand-400">{kpi.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
               <div className="space-y-2">
                 <h2 style={{ fontFamily: 'Cormorant Garamond, serif' }} className="text-5xl font-light text-sand-950">
@@ -219,8 +262,16 @@ const AdminDashboard = () => {
                               <Link 
                                 to={`/admin/atracciones/edit/${a.atraccionId}`}
                                 className="p-2 text-ocean-600 hover:bg-ocean-50 rounded-full transition-colors"
+                                title="Editar"
                               >
                                 <Edit2 className="w-4 h-4" />
+                              </Link>
+                              <Link
+                                to={`/admin/horarios/${a.atraccionId}`}
+                                className="p-2 text-sand-600 hover:bg-sand-100 rounded-full transition-colors"
+                                title="Gestionar horarios"
+                              >
+                                <Calendar className="w-4 h-4" />
                               </Link>
                               <button 
                                 onClick={() => handleDelete(a.atraccionId)}
